@@ -1,23 +1,31 @@
-import express from "express"
-import {config} from "dotenv"
+// ✅ All imports at the top
+import express from "express";
+import { config } from "dotenv";
 config();
+import cors from "cors";
+import { signup } from "./controllers/authanticationControl.js"; // ✅ named import
+import responder from "./utils/responder.js"; // ✅ utility
+import connectdb from "./config/connectdb.js"; // ✅ database
 
 
 
+const PORT = process.env.PORT || 3000;
+const app = express();
 
- const PORT= 3000 || process.env.PORT
- const app=express();
+// ✅ Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
- //utils its set like a responder
- import responder from "./utils/responder.js";
+// ✅ Routes
+app.post("/api/signup", signup);
 
- //config
- import connectdb from "./config/connectdb.js";
+app.get("/health", (req, res) => {
+  return responder(res, null, 200, true, "server is healthy");
+});
 
-app.get ("/health",(req,res)=>{
-    return  responder (res,null,200,true,"server is healthy")
-})
+// ✅ Start server
 app.listen(PORT, () => {
-    console.log(`App is started on localhost ${PORT}`);
-    connectdb()
+  console.log(`App is started on localhost ${PORT}`);
+  connectdb();
 });
