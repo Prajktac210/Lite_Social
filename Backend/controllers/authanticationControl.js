@@ -1,8 +1,9 @@
-import responder from "../utils/responder.js"; // Add .js for ES modules
+import responder from "../utils/responder.js"; 
 import bcrypt from "bcrypt";
-import User from "../modules/user.model.js"; 
+import jwt from "jsonwebtoken";
+import User from "../models/user.model.js"; 
 
-export const signup = async (req, res) => {
+ const signup = async (req, res) => {
   try {
     const { name, email, password, user_name } = req.body;
     const requiredFields = ["name", "email", "password", "user_name"];
@@ -51,3 +52,42 @@ export const signup = async (req, res) => {
     return responder(res, null, 500, false, `Signup error: ${error.message}`);
   }
 };
+const login =async (req,res)=>{
+try {
+  let {email,password}=req.body
+  let requiredFields = ["email", "password"];
+
+    // ✅ Validate required fields
+    requiredFields.forEach((field) => {
+  if (!req.body[field] ) {
+    return responder(res, null, 400, false, `${field} is required`);
+      
+  }
+});
+let Founduser=await User.findOne({email})
+
+if(!Founduser){
+  return responder(res,null,400,false,"User not found")
+}
+let isPasswordCorrect=await bcrypt.compare(password,Founduser.password)
+if(!isPasswordCorrect){
+  return responder(res,null,400,false,"Invalid credentials")
+}
+let token = jwt.sign(
+  {
+    _id: Founduser._id,
+    email: Founduser.email,
+    user_name: Founduser.user_name,
+  },
+  process.env.JWT_SECRET, //  secret
+  );
+
+req.session.token=token //store token in the using session
+return responder(res,null,200,true,"Login successful")
+} catch (error) {
+  return responder(res, null, 500, false, `Login error: ${error.message}`);
+}
+
+
+}
+export {signup ,login}
